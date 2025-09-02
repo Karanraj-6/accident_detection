@@ -1,0 +1,110 @@
+{
+  "accidents": [
+    {
+      "id": 1,
+      "location": {
+        "latitude": 34.0522,
+        "longitude": -118.2437
+      },
+      "time": "2023-10-01T14:30:00Z",
+      "severity": "high",
+      "vehicles": [
+        {
+          "type": "car",
+          "model": "sedan",
+          "color": "red",
+          "damage": "front-end collision"
+        },
+        {
+          "type": "car",
+          "model": "SUV",
+          "color": "blue",
+          "damage": "rear-end collision"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "location": {
+        "latitude": 40.7128,
+        "longitude": -74.0060
+      },
+      "time": "2023-10-02T09:15:00Z",
+      "severity": "medium",
+      "vehicles": [
+        {
+          "type": "motorcycle",
+          "model": "sport",
+          "color": "black",
+          "damage": "side collision"
+        },
+        {
+          "type": "car",
+          "model": "hatchback",
+          "color": "green",
+          "damage": "minor scratches"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "location": {
+        "latitude": 37.7749,
+        "longitude": -122.4194
+      },
+      "time": "2023-10-03T17:45:00Z",
+      "severity": "low",
+      "vehicles": [
+        {
+          "type": "truck",
+          "model": "pickup",
+          "color": "white",
+          "damage": "none"
+        },
+        {
+          "type": "bicycle",
+          "model": "mountain",
+          "color": "yellow",
+          "damage": "minor damage"
+        }
+      ]
+    }
+  ],
+  "scenarios": [
+    {
+      "id": "head-on",
+      "name": "Head-on Collision",
+      "description": "Two vehicles traveling in opposite directions collide front-to-front",
+      "avgImpactForce": 45.2,
+      "fatalityRate": 0.42,
+      "commonCauses": ["Distracted driving", "Lane departure", "Drunk driving"]
+    },
+    {
+      "id": "rear-end",
+      "name": "Rear-end Collision",
+      "description": "One vehicle impacts the back of another vehicle",
+      "avgImpactForce": 25.8,
+      "fatalityRate": 0.07,
+      "commonCauses": ["Following too closely", "Sudden stops", "Distracted driving"]
+    },
+    {
+      "id": "side-impact",
+      "name": "Side Impact (T-bone)",
+      "description": "One vehicle impacts the side of another vehicle, forming a T-shape",
+      "avgImpactForce": 32.6,
+      "fatalityRate": 0.26,
+      "commonCauses": ["Running red lights", "Failure to yield", "Impaired visibility"]
+    }
+  ],
+  "statistics": {
+    "annualAccidents": 6452000,
+    "fatalAccidents": 38680,
+    "averageResponseTime": 8.2,
+    "automatedDetectionImprovementPercent": 63
+  },
+  "detectionMetrics": {
+    "accuracyRate": 0.94,
+    "falsePositiveRate": 0.03,
+    "avgDetectionTime": 0.43
+  }
+}

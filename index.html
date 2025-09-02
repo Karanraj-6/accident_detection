@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Accident Detection System</title>
+    
+    <!-- CSS Libraries -->
+    <link rel="stylesheet" href="css/normalize.css">
+    <link rel="stylesheet" href="css/main.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f8f9fa;
+        }
+        .container {
+            margin-top: 20px;
+        }
+        .video-container {
+            border: 2px solid black;
+            margin: auto;
+            text-align: center;
+            background-color: #000;
+            border-radius: 8px;
+        }
+        .hidden {
+            display: none;
+        }
+        .alert-box {
+            font-size: 18px;
+            color: white;
+            background: red;
+            padding: 10px;
+            margin-top: 20px;
+            text-align: center;
+            animation: blink 1s infinite;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(255, 0, 0, 0.5);
+        }
+        @keyframes blink {
+            50% { opacity: 0; }
+        }
+        .tracking, .stats, .procedure {
+            background: #e3f2fd;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            height: 100%;
+        }
+        .section-heading {
+            border-left: 4px solid #0d6efd;
+            padding-left: 10px;
+            margin-bottom: 15px;
+        }
+        iframe {
+            width: 100%;
+            height: 300px;
+            border: 0;
+        }
+        .chart-container {
+            position: relative;
+            background: #ffffff;
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            height: auto;
+            margin-bottom: 15px;
+        }
+        .chart-tabs {
+            display: flex;
+            justify-content: center;
+            border-bottom: 1px solid #dee2e6;
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+        }
+        .chart-tabs button {
+            margin: 0 5px;
+            border-radius: 20px;
+        }
+        .chart-tabs button.active {
+            background-color: #0d6efd;
+            color: white;
+        }
+        .chart-panel {
+            display: none;
+            height: auto;
+            min-height: 250px;
+            position: relative;
+        }
+        .chart-panel.active {
+            display: block;
+        }
+        .card {
+            transition: transform 0.3s;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        .row {
+            margin-bottom: 20px;
+        }
+        img.img-fluid {
+            max-width: 100%;
+            height: auto;
+        }
+        /* 3D Visualization Container */
+        #visualization-container {
+            border: 1px solid #333;
+            min-height: 400px;
+            background-color: #1a1a1a;
+            margin-top: 20px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+        }
+        #start-visualization {
+            background-color: #e74c3c;
+            color: white;
+            font-size: 1.2rem;
+            padding: 1rem 2rem;
+            margin: 1.5rem 0;
+            border: none;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+        /* Controls panel */
+        #controls-panel {
+            display: flex;
+            justify-content: center;
+            margin: 15px 0;
+            gap: 10px;
+        }
+        .scenario-btn {
+            padding: 8px 16px;
+            background-color: #34495e;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .scenario-btn:hover {
+            background-color: #2c3e50;
+        }
+        .info-section {
+            margin-top: 30px;
+        }
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        .info-card {
+            padding: 20px;
+            background-color: #e3f2fd;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        /* Loading screen styles */
+        #loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            transition: opacity 0.5s;
+            background-color: rgba(0, 0, 0, 0.7); /* Semi-transparent overlay */
+        }
+
+        /* Style for the background video */
+        #loading-video {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover; /* Cover entire area while maintaining aspect ratio */
+            z-index: -1; /* Place behind the loading text and spinner */
+        }
+
+        /* Make loading text more visible over video */
+        #loading-text {
+            color: rgb(0, 0, 0);
+            font-size: 2.5rem;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 2rem;
+            text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.9); /* Stronger shadow for better visibility */
+            min-height: 3.5rem;
+            z-index: 1; /* Place above the video */
+            background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent background */
+            padding: 10px 20px;
+            border-radius: 10px;
+        }
+
+        /* Make spinner more visible over video */
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+            z-index: 1; /* Place above the video */
+        }
+        
+        .cursor {
+            display: inline-block;
+            width: 3px;
+            height: 1em;
+            background: white;
+            margin-left: 2px;
+            animation: blink 1s infinite;
+            vertical-align: text-bottom;
+        }
+        
+        @keyframes blink {
+            50% { opacity: 0; }
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body bgcolor="black">
+    <div id="loading-overlay">
+        <video id="loading-video" autoplay muted loop playsinline>
+            <source src="templates/loading_page_video.mp4" type="video/mp4">
+        </video>
+        <div id="loading-text"></div>
+        <div class="loading-spinner"></div>
+    </div>
+    <header class="bg-dark text-white text-center p-3">
+        <h1>AI Accident Detection & Emergency Alert System</h1>
+        <p>Real-time accident detection, analysis, and emergency response</p>
+    </header>
+    
+    <div class="container">
+        <!-- Dashboard Analytics Section -->
+        <div class="row">
+            <div class="col-md-6">
+                <h2 class="section-heading">Location Information</h2>
+                <div class="tracking">
+                    <p><strong>Place ID:</strong> <span id="placeId">AD-1234</span></p>
+                    <p><strong>IP Address:</strong> <span id="ipAddress">192.168.1.1</span></p>
+                    <p><strong>MAC Address:</strong> <span id="macAddress">00:1A:2B:3C:4D:5E</span></p>
+                    <p><strong>Device Type:</strong> <span id="deviceType">CCTV Camera (HD 1080p)</span></p>
+                    <p><strong>Location:</strong> <span id="location">New York, USA</span></p>
+                    <p><strong>GPS Avail:</strong> <span id="gpsAvail">YES</span></p>
+                    <p><strong>GPS Coordinates:</strong> <span id="gps">40.7128° N, 74.0060° W</span></p>
+                    <p><strong>Camera ID:</strong> <span id="cameraId">CCTV-5678</span></p>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <h2 class="section-heading">System Performance</h2>
+                <div class="chart-container">
+                    <div class="chart-tabs mb-2">
+                        <button class="btn btn-sm btn-outline-primary active" onclick="showChart('performanceChart')">Performance Metrics</button>
+                        <button class="btn btn-sm btn-outline-primary" onclick="showChart('timeseriesChart')">Historical Data</button>
+                        <button class="btn btn-sm btn-outline-primary" onclick="showChart('pieChart')">Incident Types</button>
+                        <button class="btn btn-sm btn-outline-primary" onclick="showChart('tableChart')">Detailed Data</button>
+                    </div>
+                    <div class="chart-panel active" id="performanceChart">
+                        <canvas id="chart"></canvas>
+                    </div>
+                    <div class="chart-panel" id="timeseriesChart">
+                        <canvas id="lineChart"></canvas>
+                    </div>
+                    <div class="chart-panel" id="pieChart">
+                        <canvas id="donutChart"></canvas>
+                    </div>
+                    <div class="chart-panel" id="tableChart">
+                        <img src="templates/table-6D0EC008-91B4-D6AD-B38937365351EAD2.png" alt="Detailed Performance Data" class="img-fluid">
+                    </div>
+                </div>
+                <div class="mt-2 text-center small text-muted">Data refreshes every 5 minutes</div>
+            </div>
+        </div>
+        
+        <!-- Separate row for Accident Statistics -->
+        <div class="row mt-4">
+            <div class="col-md-6">
+                <h2 class="section-heading">Accident Statistics</h2>
+                <div class="stats">
+                    <p><strong>Accidents Today:</strong> <span id="accidentsToday">5</span></p>
+                    <p><strong>Affected Location:</strong> <span id="affectedLocation">Downtown, New York</span></p>
+                    <p><strong>Fatalities:</strong> <span id="fatalities">2</span></p>
+                    <p><strong>Injuries:</strong> <span id="injuries">8</span></p>
+                    <p><strong>Time of Last Accident:</strong> <span id="lastAccidentTime">14:45 PM</span></p>
+                    <p><strong>Weather Conditions:</strong> <span id="weather">Rainy</span></p>
+                    <p><strong>Cause:</strong> <span id="cause">Speeding & Wet Roads</span></p>
+                    <p><strong>Emergency Response Time:</strong> <span id="responseTime">5 minutes</span></p>
+                    <p><strong>Road Closure:</strong> <span id="roadClosure">Yes (2 blocks affected)</span></p>
+                    <p><strong>CCTV Footage Available:</strong> <span id="cctvAvailable">Yes</span></p>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <h2 class="section-heading">Detected Accident Image</h2>
+                <img src="templates/accident.png" alt="Accident Detected" class="img-fluid">
+            </div>
+        </div>
+        
+        <div class="row mt-4">
+            <div class="col-md-12">
+                <h2 class="section-heading">Live CCTV Monitoring</h2>
+                <div class="video-container">
+                    <!-- DroidCam integration -->
+                    <div class="d-flex justify-content-center align-items-center mb-2">
+                        <input type="text" id="cameraIP" class="form-control w-50 me-2" 
+                               placeholder="Enter DroidCam IP (e.g. 192.168.1.5:4747)">
+                        <button class="btn btn-primary" onclick="connectDroidCam()">Connect</button>
+                        <button class="btn btn-danger ms-2" onclick="resetCamera()">Reset</button>
+                    </div>
+                    
+                    <!-- Video element for the stream -->
+                    <video id="cctvFeed" controls autoplay muted width="100%" 
+                           poster="cctv-placeholder.jpg" class="img-fluid">
+                        <source src="templates/accidentvi.mp4" type="video/mp4">
+                        Your browser does not support the video tag.
+                    </video>
+                    
+                    <div class="mt-2 text-center text-muted small">
+                        <span id="connectionStatus">Enter DroidCam IP address to connect to your mobile camera</span>
+                    </div>
+                    
+                    <div class="alert alert-info mt-2" id="droidcamInstructions">
+                        <h5>How to connect using DroidCam:</h5>
+                        <ol>
+                            <li>Download and install DroidCam on your mobile phone</li>
+                            <li>Make sure your phone and computer are on the same WiFi network</li>
+                            <li>Open DroidCam app on your phone</li>
+                            <li>Note the IP address and port shown in the app (e.g. 192.168.1.5:4747)</li>
+                            <li>Enter that IP address and port in the field above and click Connect</li>
+                        </ol>
+                    </div>
+                    
+                    <!-- Add this right after your other camera control buttons -->
+                    <div class="mt-3">
+                        <button class="btn btn-info" onclick="useBuiltinCamera()">Use Built-in Camera</button>
+                        <button class="btn btn-secondary" onclick="toggleDebugInfo()">Show/Hide Debug Info</button>
+                    </div>
+                    
+                    <!-- Debug info div -->
+                    <div id="cameraDebugInfo" class="mt-2 small alert alert-secondary" style="display: none;">
+                        <strong>Debug Info:</strong> This area will show connection details and errors.
+                    </div>
+                </div>
+                <div id="alertBox" class="alert-box">🚨 Accident Detected! Notifying Emergency Services...</div>
+                <div class="mt-2">
+                    <button class="btn btn-sm btn-danger" onclick="pauseCamera()">Pause Feed</button>
+                    <button class="btn btn-sm btn-success" onclick="resumeCamera()">Resume Feed</button>
+                    <button class="btn btn-sm btn-info" onclick="toggleFullscreen()">Fullscreen</button>
+                    <button class="btn btn-sm btn-warning" onclick="stopCamera()">Stop Camera</button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row mt-4">
+            <div class="col-md-12">
+                <h2 class="section-heading">Accident Location on Map</h2>
+                <div class="map-container bg-white p-3 rounded">
+                    <img src="templates/gps.jpg" alt="GPS Location Map" class="img-fluid mx-auto d-block">
+                    <div class="text-center mt-3">
+                        <button class="btn btn-primary" onclick="trackLocation()">Track Location</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 3D Visualization Section MOVED HERE -->
+        <div class="row mt-4">
+            <div class="col-md-12">
+                <h2 class="section-heading">3D Accident Visualization</h2>
+                <div id="visualization-container"></div>
+                <div class="text-center">
+                    <button id="start-visualization">Start Visualization</button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row mt-4">
+            <div class="col-md-12">
+                <h2 class="section-heading">How It Works</h2>
+                <div class="procedure">
+                    <p><strong>1.</strong> The system continuously monitors live CCTV footage.</p>
+                    <p><strong>2.</strong> AI algorithms analyze video frames in real-time to detect accidents.</p>
+                    <p><strong>3.</strong> Upon accident detection, the system extracts the location from the camera's IP address.</p>
+                    <p><strong>4.</strong> An alert is triggered with a unique tracking ID and GPS coordinates.</p>
+                    <p><strong>5.</strong> Emergency services (ambulance, police) are notified immediately to respond to the accident site.</p>
+                    <p><strong>6.</strong> The system logs data for further analysis and improvements.</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row mt-4">
+            <div class="col-md-12">
+                <h2 class="section-heading">About This Project</h2>
+                <div class="info-grid">
+                    <div class="info-card">
+                        <h3>Real-time Detection</h3>
+                        <p>Our system uses advanced computer vision algorithms to detect accidents as they happen, allowing for immediate emergency response.</p>
+                    </div>
+                    <div class="info-card">
+                        <h3>Impact Analysis</h3>
+                        <p>Simulating physics of collisions to analyze impact forces and predict potential injuries to occupants.</p>
+                    </div>
+                    <div class="info-card">
+                        <h3>Autonomous Response</h3>
+                        <p>Demonstrating how autonomous vehicles can anticipate and respond to prevent accidents before they occur.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <footer class="bg-dark text-white text-center p-3 mt-4">
+        <p>&copy; 2025 Accident Detection AI | Hackathon Entry</p>
+    </footer>
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Custom JS -->
+    <script>
+        function trackLocation() {
+            alert('Tracking accident location: 40.7128° N, 74.0060° W');
+            window.open('https://www.google.com/maps?q=40.7128,-74.0060', '_blank');
+        }
+
+        var ctx = document.getElementById('chart').getContext('2d');
+        var myChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: ['Detection Accuracy', 'Response Time (sec)', 'Notifications Sent'],
+                datasets: [{
+                    label: 'System Performance',
+                    data: [97, 25, 200],
+                    backgroundColor: ['blue', 'green', 'red']
+                }]
+            }
+        });
+
+        function showChart(chartId) {
+            var charts = document.querySelectorAll('.chart-panel');
+            charts.forEach(function(chart) {
+                chart.classList.remove('active');
+            });
+            document.getElementById(chartId).classList.add('active');
+        }
+
+        function toggleFullscreen() {
+            var video = document.getElementById('cctvFeed');
+            if (video.requestFullscreen) {
+                video.requestFullscreen();
+            } else if (video.webkitRequestFullscreen) { /* Safari */
+                video.webkitRequestFullscreen();
+            } else if (video.msRequestFullscreen) { /* IE11 */
+                video.msRequestFullscreen();
+            }
+        }
+
+        // DroidCam connection
+        function connectDroidCam() {
+            const cameraIP = document.getElementById('cameraIP').value;
+            const debugInfo = document.getElementById('cameraDebugInfo');
+            
+            if (!cameraIP) {
+                alert('Please enter the DroidCam IP address and port');
+                return;
+            }
+            
+            // Show debug info for troubleshooting
+            debugInfo.style.display = 'block';
+            debugInfo.innerHTML = '<strong>Debug Info:</strong> Attempting to connect to DroidCam at ' + cameraIP;
+            
+            const video = document.getElementById('cctvFeed');
+            document.getElementById('connectionStatus').textContent = `Connecting to DroidCam at ${cameraIP}...`;
+            
+            // First try to use <img> tag as it works better with MJPEG streams
+            const imgContainer = document.createElement('div');
+            imgContainer.style.width = '100%';
+            imgContainer.style.height = 'auto';
+            
+            // Remove any existing content from video element
+            while (video.firstChild) {
+                video.removeChild(video.firstChild);
+            }
+            
+            // Create image element for MJPEG stream
+            const img = document.createElement('img');
+            img.crossOrigin = "anonymous"; // add this line
+            img.style.width = '100%';
+            img.style.height = 'auto';
+            
+            // Try different possible DroidCam URL formats with cache-busting
+            const timestamp = new Date().getTime();
+            const baseUrl = `http://${cameraIP}`;
+            const urls = [
+                `${baseUrl}/video?${timestamp}`,
+                `${baseUrl}/mjpegfeed?${timestamp}`,
+                `${baseUrl}/videofeed?${timestamp}`
+            ];
+            
+            let currentUrlIndex = 0;
+            
+            function tryNextUrl() {
+                if (currentUrlIndex >= urls.length) {
+                    // All URLs failed, show error
+                    debugInfo.innerHTML += '<br>❌ Failed to connect to DroidCam using any known URL format.';
+                    alert("Failed to connect to DroidCam. Please check that the app is running and the IP address is correct.");
+                    resetCamera();
+                    return;
+                }
+                
+                debugInfo.innerHTML += `<br>Trying URL format ${currentUrlIndex+1}: ${urls[currentUrlIndex]}`;
+                img.src = urls[currentUrlIndex];
+                
+                // Move to next URL on error
+                img.onerror = function() {
+                    debugInfo.innerHTML += `<br>❌ URL format ${currentUrlIndex+1} failed`;
+                    currentUrlIndex++;
+                    tryNextUrl();
+                };
+                
+                // On success
+                img.onload = function() {
+                    document.getElementById('connectionStatus').textContent = 
+                        `Connected to DroidCam at ${cameraIP} successfully`;
+                    
+                    // Hide instructions
+                    document.getElementById('droidcamInstructions').style.display = 'none';
+                    
+                    // Start simulating accident detection after 10 seconds
+                    setTimeout(() => {
+                        document.getElementById('alertBox').style.display = 'block';
+                        document.getElementById('location').textContent = "Current Location (via DroidCam)";
+                    }, 10000);
+                };
+            }
+            
+            // Start trying URLs
+            tryNextUrl();
+            
+            imgContainer.appendChild(img);
+            video.appendChild(imgContainer);
+        }
+
+        // Reset to default recorded video
+        function resetCamera() {
+            const video = document.getElementById('cctvFeed');
+            
+            // Clear any streaming content
+            while (video.firstChild) {
+                video.removeChild(video.firstChild);
+            }
+            
+            // Reset to original source
+            video.innerHTML = '<source src="templates/accidentvi.mp4" type="video/mp4">';
+            video.load();
+            video.play();
+            
+            document.getElementById('connectionStatus').textContent = 
+                "Camera disconnected. Using recorded footage.";
+                
+            // Show the instructions again
+            document.getElementById('droidcamInstructions').style.display = 'block';
+        }
+
+        function pauseCamera() {
+            const video = document.getElementById('cctvFeed');
+            if (video.pause) video.pause();
+        }
+
+        function resumeCamera() {
+            const video = document.getElementById('cctvFeed');
+            if (video.play) video.play();
+        }
+
+        function stopCamera() {
+            resetCamera();
+        }
+
+        function toggleFullscreen() {
+            const video = document.getElementById('cctvFeed');
+            if (video.requestFullscreen) {
+                video.requestFullscreen();
+            } else if (video.webkitRequestFullscreen) {
+                video.webkitRequestFullscreen();
+            } else if (video.msRequestFullscreen) {
+                video.msRequestFullscreen();
+            }
+        }
+
+        function useBuiltinCamera() {
+            const debugInfo = document.getElementById('cameraDebugInfo');
+            debugInfo.style.display = 'block';
+            debugInfo.innerHTML = '<strong>Debug Info:</strong> Attempting to access built-in camera...';
+            
+            const constraints = {
+                video: {
+                    facingMode: "environment" // Try to use the rear camera if available
+                }
+            };
+            
+            const video = document.getElementById('cctvFeed');
+            
+            // Reset to empty video
+            while (video.firstChild) {
+                video.removeChild(video.firstChild);
+            }
+            
+            // Try to connect using default camera
+            navigator.mediaDevices.getUserMedia(constraints)
+                .then(stream => {
+                    video.srcObject = stream;
+                    video.play();
+                    document.getElementById('connectionStatus').textContent = "Using built-in camera";
+                    debugInfo.innerHTML += '<br>✅ Successfully connected to built-in camera';
+                    
+                    // Hide instructions
+                    document.getElementById('droidcamInstructions').style.display = 'none';
+                })
+                .catch(err => {
+                    console.error("Error accessing built-in camera:", err);
+                    debugInfo.innerHTML += '<br>❌ Error accessing built-in camera: ' + err.message;
+                    alert("Couldn't access the built-in camera: " + err.message);
+                });
+        }
+
+        function toggleDebugInfo() {
+            const debugInfo = document.getElementById('cameraDebugInfo');
+            if (debugInfo.style.display === 'none') {
+                debugInfo.style.display = 'block';
+            } else {
+                debugInfo.style.display = 'none';
+            }
+        }
+    </script>
+    
+    <!-- Three.js Libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+    
+    <!-- Debug output -->
+    <script>
+        console.log("HTML loaded. About to load scripts...");
+        window.addEventListener('error', function(e) {
+            console.error('Global error caught:', e.message, e.filename, e.lineno);
+        });
+    </script>
+    
+    <!-- Application scripts -->
+    <script src="js/accident-detection.js"></script>
+    <script src="js/visualization.js"></script>
+    <script src="js/main.js"></script>
+    
+    <script>
+        console.log("All scripts loaded. Check if visualization exists:", typeof visualization);
+        console.log("Check if accident detection exists:", typeof accidentDetection);
+    </script>
+    <script>
+    // Typing animation for loading screen
+    document.addEventListener('DOMContentLoaded', function() {
+        const text = "AI Accident Detection & Emergency Alert System";
+        const loadingText = document.getElementById('loading-text');
+        let i = 0;
+        
+        // Create cursor element
+        const cursor = document.createElement('span');
+        cursor.className = 'cursor';
+        loadingText.appendChild(cursor);
+        
+        // Typing effect
+        function typeWriter() {
+            if (i < text.length) {
+                // Insert character before the cursor
+                loadingText.insertBefore(document.createTextNode(text.charAt(i)), cursor);
+                i++;
+                setTimeout(typeWriter, 50); // Speed of typing
+            }
+        }
+        
+        // Start typing
+        typeWriter();
+        
+        // Hide loading screen after 3 seconds
+        setTimeout(function() {
+            const loadingOverlay = document.getElementById('loading-overlay');
+            loadingOverlay.style.opacity = '0';
+            setTimeout(function() {
+                loadingOverlay.style.display = 'none';
+            }, 500);
+        }, 3000);
+    });
+</script>
+</body>
+</html>
